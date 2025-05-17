@@ -18,10 +18,10 @@ backgroundImg.src = "images/background.png";
 
 const santa = {
   x: 180,
-  y: 0, // יקבל גובה בהמשך
+  y: 0, // יקבע לפי הגובה בפונקציה
   width: 60,
   height: 60,
-  speed: 10
+  speed: 5
 };
 
 let bottles = [];
@@ -32,7 +32,7 @@ let gameOver = false;
 let touchLeft = false;
 let touchRight = false;
 
-// תנועה במקלדת
+// תנועה עם מקלדת
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") santa.x -= santa.speed;
   if (e.key === "ArrowRight") santa.x += santa.speed;
@@ -44,14 +44,20 @@ document.getElementById("leftTouch").addEventListener("touchend", () => touchLef
 document.getElementById("rightTouch").addEventListener("touchstart", () => touchRight = true);
 document.getElementById("rightTouch").addEventListener("touchend", () => touchRight = false);
 
-// מתיחת הקנבס לגודל מלא
+// התאמה למסך מלא
 function resizeCanvasToFullScreen() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   santa.y = canvas.height - santa.height - 10;
 }
+
 window.addEventListener("resize", resizeCanvasToFullScreen);
 
+document.addEventListener("fullscreenchange", () => {
+  resizeCanvasToFullScreen();
+});
+
+// התנגשויות
 function isColliding(a, b) {
   return (
     a.x < b.x + b.width &&
@@ -61,18 +67,21 @@ function isColliding(a, b) {
   );
 }
 
+// בקבוק
 function dropBottle() {
   const x = Math.random() * (canvas.width - 30);
   const speed = 2 + difficultyLevel * 0.5;
   bottles.push({ x, y: 0, width: 30, height: 60, speed });
 }
 
+// פצצה
 function dropBomb() {
   const x = Math.random() * (canvas.width - 30);
   const speed = 2 + difficultyLevel * 0.5;
   bombs.push({ x, y: 0, width: 30, height: 60, speed });
 }
 
+// ציור המשחק
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
@@ -115,7 +124,6 @@ function draw() {
     restartBtn.classList.add("show-pop");
   }
 
-  // תנועה במסך מגע
   if (touchLeft) {
     santa.x -= santa.speed;
     if (santa.x < 0) santa.x = 0;
@@ -150,20 +158,23 @@ function resetGame() {
 function startGame() {
   startScreen.style.display = "none";
 
-  // כניסה למסך מלא
   if (canvas.requestFullscreen) {
-    canvas.requestFullscreen().catch(err => console.log("לא נכנס למסך מלא:", err));
+    canvas.requestFullscreen().catch(() => {});
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen();
   }
 
-  resizeCanvasToFullScreen();
-  gameLoop();
+  // עיכוב קצר להתייצבות לפני התחלה
+  setTimeout(() => {
+    resizeCanvasToFullScreen();
+    gameLoop();
+  }, 300);
 }
 
 startBtn.addEventListener("click", startGame);
 restartBtn.addEventListener("click", resetGame);
 
+// רמות קושי והורדות
 setInterval(dropBottle, 1500);
 setInterval(dropBomb, 5000);
 setInterval(() => {
