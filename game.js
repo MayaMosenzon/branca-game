@@ -1,183 +1,146 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const restartBtn = document.getElementById("restartBtn");
-const startScreen = document.getElementById("startScreen");
-const startBtn = document.getElementById("startBtn");
-
-const santaImg = new Image();
-santaImg.src = "images/santa.png";
-
-const bottleImg = new Image();
-bottleImg.src = "images/bottle.png";
-
-const bombImg = new Image();
-bombImg.src = "images/bomb.png";
-
-const backgroundImg = new Image();
-backgroundImg.src = "images/background.png";
-
-const santa = {
-  x: 180,
-  y: 0, // יקבע לפי הגובה בפונקציה
-  width: 60,
-  height: 60,
-  speed: 5
-};
-
-let bottles = [];
-let bombs = [];
-let score = 0;
-let difficultyLevel = 1;
-let gameOver = false;
-let touchLeft = false;
-let touchRight = false;
-
-// תנועה עם מקלדת
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") santa.x -= santa.speed;
-  if (e.key === "ArrowRight") santa.x += santa.speed;
-});
-
-// תנועה במסך מגע
-document.getElementById("leftTouch").addEventListener("touchstart", () => touchLeft = true);
-document.getElementById("leftTouch").addEventListener("touchend", () => touchLeft = false);
-document.getElementById("rightTouch").addEventListener("touchstart", () => touchRight = true);
-document.getElementById("rightTouch").addEventListener("touchend", () => touchRight = false);
-
-// התאמה למסך מלא
-function resizeCanvasToFullScreen() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  santa.y = canvas.height - santa.height - 10;
-}
-
-window.addEventListener("resize", resizeCanvasToFullScreen);
-
-document.addEventListener("fullscreenchange", () => {
-  resizeCanvasToFullScreen();
-});
-
-// התנגשויות
-function isColliding(a, b) {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
-}
-
-// בקבוק
-function dropBottle() {
-  const x = Math.random() * (canvas.width - 30);
-  const speed = 2 + difficultyLevel * 0.5;
-  bottles.push({ x, y: 0, width: 30, height: 60, speed });
-}
-
-// פצצה
-function dropBomb() {
-  const x = Math.random() * (canvas.width - 30);
-  const speed = 2 + difficultyLevel * 0.5;
-  bombs.push({ x, y: 0, width: 30, height: 60, speed });
-}
-
-// ציור המשחק
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-  ctx.drawImage(santaImg, santa.x, santa.y, santa.width, santa.height);
-
-  bottles.forEach((bottle, i) => {
-    bottle.y += bottle.speed;
-    ctx.drawImage(bottleImg, bottle.x, bottle.y, bottle.width, bottle.height);
-    if (isColliding(santa, bottle)) {
-      score++;
-      bottles.splice(i, 1);
-    } else if (bottle.y > canvas.height) {
-      bottles.splice(i, 1);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Super Bar-io Bros</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f8ff;
     }
-  });
 
-  bombs.forEach((bomb, i) => {
-    bomb.y += bomb.speed;
-    ctx.drawImage(bombImg, bomb.x, bomb.y, bomb.width, bomb.height);
-    if (isColliding(santa, bomb)) {
-      gameOver = true;
-    } else if (bomb.y > canvas.height) {
-      bombs.splice(i, 1);
+    #startScreen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(to bottom right, rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+                  url("images/start-bg.jpg") no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 10;
+      padding: 2vh 4vw;
+      box-sizing: border-box;
     }
-  });
 
-  ctx.fillStyle = "black";
-  ctx.font = "20px Arial";
-  ctx.fillText("Score: " + score, 10, 30);
-
-  if (gameOver) {
-    ctx.font = "bold 48px 'Comic Sans MS', cursive";
-    ctx.textAlign = "center";
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 4;
-    ctx.fillStyle = "white";
-    ctx.strokeText("GAME OVER", canvas.width / 2, canvas.height / 2);
-    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-    restartBtn.style.display = "block";
-    restartBtn.classList.add("show-pop");
-  }
-
-  if (touchLeft) {
-    santa.x -= santa.speed;
-    if (santa.x < 0) santa.x = 0;
-  }
-  if (touchRight) {
-    santa.x += santa.speed;
-    if (santa.x + santa.width > canvas.width) {
-      santa.x = canvas.width - santa.width;
+    #startScreen h1 {
+      font-size: clamp(24px, 7vw, 36px);
+      color: #d60000;
+      background-color: rgba(255,255,255,0.8);
+      padding: 10px 20px;
+      border-radius: 20px;
+      margin-bottom: 20px;
     }
-  }
-}
 
-function gameLoop() {
-  draw();
-  if (!gameOver) requestAnimationFrame(gameLoop);
-}
+    #startBtn {
+      padding: 16px 32px;
+      font-size: clamp(18px, 5vw, 24px);
+      background: linear-gradient(145deg, #ff6b6b, #ff9999);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+      width: min(80%, 320px);
+    }
 
-function resetGame() {
-  bottles = [];
-  bombs = [];
-  score = 0;
-  difficultyLevel = 1;
-  santa.x = 180;
-  santa.speed = 5;
-  gameOver = false;
-  restartBtn.style.display = "none";
-  restartBtn.classList.remove("show-pop");
-  resizeCanvasToFullScreen();
-  gameLoop();
-}
+    #startBtn:hover {
+      transform: scale(1.07);
+    }
 
-function startGame() {
-  startScreen.style.display = "none";
+    #gameContainer {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      max-width: 100%;
+      overflow: hidden;
+    }
 
-  if (canvas.requestFullscreen) {
-    canvas.requestFullscreen().catch(() => {});
-  } else if (canvas.webkitRequestFullscreen) {
-    canvas.webkitRequestFullscreen();
-  }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: none;
+      touch-action: none;
+    }
 
-  // עיכוב קצר להתייצבות לפני התחלה
-  setTimeout(() => {
-    resizeCanvasToFullScreen();
-    gameLoop();
-  }, 300);
-}
+    #restartBtn {
+      display: none;
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 28px;
+      font-size: 20px;
+      font-weight: bold;
+      background: linear-gradient(145deg, #ff5f5f, #ff8585);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 20;
+    }
 
-startBtn.addEventListener("click", startGame);
-restartBtn.addEventListener("click", resetGame);
+    #restartBtn:hover {
+      transform: translateX(-50%) scale(1.08);
+    }
 
-// רמות קושי והורדות
-setInterval(dropBottle, 1500);
-setInterval(dropBomb, 5000);
-setInterval(() => {
-  difficultyLevel += 0.2;
-  santa.speed += 0.2;
-}, 5000);
+    @keyframes pop {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.05); }
+    }
+
+    #restartBtn.show-pop {
+      animation: pop 1.2s infinite ease-in-out;
+    }
+
+    #touchControls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    #leftTouch, #rightTouch {
+      width: 50%;
+      height: 100%;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="startScreen">
+    <h1>Super Bar-io Bros</h1>
+    <button id="startBtn">🍸 Start Game 🍸</button>
+  </div>
+
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="400" height="600" tabindex="1"></canvas>
+    <button id="restartBtn">🔁 שחק שוב</button>
+  </div>
+
+  <div id="touchControls">
+    <div id="leftTouch"></div>
+    <div id="rightTouch"></div>
+  </div>
+
+  <script src="game.js" defer></script>
+</body>
+</html>
