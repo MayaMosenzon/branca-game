@@ -1,186 +1,70 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const restartBtn = document.getElementById("restartBtn");
-const startScreen = document.getElementById("startScreen");
 const startBtn = document.getElementById("startBtn");
+const startScreen = document.getElementById("startScreen");
+const restartBtn = document.getElementById("restartBtn");
 
-const santaImg = new Image();
-santaImg.src = "images/santa.png";
-
-const bottleImg = new Image();
-bottleImg.src = "images/bottle.png";
-
-const bombImg = new Image();
-bombImg.src = "images/bomb.png";
-
-const backgroundImg = new Image();
-backgroundImg.src = "images/background.png";
-
-const santa = {
-  x: 180,
-  y: 0,
-  width: 60,
-  height: 60,
-  speed: 5
-};
-
-let bottles = [];
-let bombs = [];
-let score = 0;
-let difficultyLevel = 1;
+let santa = { x: 100, y: 0, w: 50, h: 50, speed: 5 };
 let gameOver = false;
 let touchLeft = false;
 let touchRight = false;
 
-// תנועה עם מקלדת
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  santa.y = canvas.height - santa.h - 10;
+  restartBtn.style.top = canvas.height * 0.6 + 'px';
+}
+resize();
+
+window.addEventListener("resize", resize);
+document.addEventListener("fullscreenchange", resize);
+
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") santa.x -= santa.speed;
   if (e.key === "ArrowRight") santa.x += santa.speed;
 });
 
-// תנועה עם טאצ'
 document.getElementById("leftTouch").addEventListener("touchstart", () => touchLeft = true);
 document.getElementById("leftTouch").addEventListener("touchend", () => touchLeft = false);
 document.getElementById("rightTouch").addEventListener("touchstart", () => touchRight = true);
 document.getElementById("rightTouch").addEventListener("touchend", () => touchRight = false);
 
-// פונקציה למיקום כפתור "שחק שוב"
-function positionRestartButton() {
-  restartBtn.style.top = (canvas.height * 0.6) + "px";
-  restartBtn.style.left = "50%";
-  restartBtn.style.transform = "translateX(-50%)";
-}
-
-// התאמת גודל הקנבס
-function resizeCanvasToFullScreen() {
-  setTimeout(() => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    santa.y = canvas.height - santa.height - 10;
-    positionRestartButton();
-  }, 100);
-}
-
-window.addEventListener("resize", resizeCanvasToFullScreen);
-document.addEventListener("fullscreenchange", resizeCanvasToFullScreen);
-
-function isColliding(a, b) {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
-}
-
-function dropBottle() {
-  const x = Math.random() * (canvas.width - 30);
-  const speed = 2 + difficultyLevel * 0.5;
-  bottles.push({ x, y: 0, width: 30, height: 60, speed });
-}
-
-function dropBomb() {
-  const x = Math.random() * (canvas.width - 30);
-  const speed = 2 + difficultyLevel * 0.5;
-  bombs.push({ x, y: 0, width: 30, height: 60, speed });
-}
-
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-  ctx.drawImage(santaImg, santa.x, santa.y, santa.width, santa.height);
+  ctx.fillStyle = "red";
+  ctx.fillRect(santa.x, santa.y, santa.w, santa.h);
 
-  bottles.forEach((bottle, i) => {
-    bottle.y += bottle.speed;
-    ctx.drawImage(bottleImg, bottle.x, bottle.y, bottle.width, bottle.height);
-    if (isColliding(santa, bottle)) {
-      score++;
-      bottles.splice(i, 1);
-    } else if (bottle.y > canvas.height) {
-      bottles.splice(i, 1);
-    }
-  });
-
-  bombs.forEach((bomb, i) => {
-    bomb.y += bomb.speed;
-    ctx.drawImage(bombImg, bomb.x, bomb.y, bomb.width, bomb.height);
-    if (isColliding(santa, bomb)) {
-      gameOver = true;
-    } else if (bomb.y > canvas.height) {
-      bombs.splice(i, 1);
-    }
-  });
-
-  ctx.fillStyle = "black";
-  ctx.font = "20px Arial";
-  ctx.fillText("Score: " + score, 10, 30);
+  if (touchLeft) santa.x -= santa.speed;
+  if (touchRight) santa.x += santa.speed;
 
   if (gameOver) {
-    ctx.font = "bold 48px 'Comic Sans MS', cursive";
-    ctx.textAlign = "center";
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 4;
-    ctx.fillStyle = "white";
-    ctx.strokeText("GAME OVER", canvas.width / 2, canvas.height / 2);
-    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-    positionRestartButton();
+    ctx.fillStyle = "black";
+    ctx.font = "40px Arial";
+    ctx.fillText("GAME OVER", canvas.width / 2 - 100, canvas.height / 2);
     restartBtn.style.display = "block";
-    restartBtn.classList.add("show-pop");
+  } else {
+    requestAnimationFrame(draw);
   }
-
-  if (touchLeft) {
-    santa.x -= santa.speed;
-    if (santa.x < 0) santa.x = 0;
-  }
-  if (touchRight) {
-    santa.x += santa.speed;
-    if (santa.x + santa.width > canvas.width) {
-      santa.x = canvas.width - santa.width;
-    }
-  }
-}
-
-function gameLoop() {
-  draw();
-  if (!gameOver) requestAnimationFrame(gameLoop);
-}
-
-function resetGame() {
-  bottles = [];
-  bombs = [];
-  score = 0;
-  difficultyLevel = 1;
-  santa.x = 180;
-  santa.speed = 5;
-  gameOver = false;
-  restartBtn.style.display = "none";
-  restartBtn.classList.remove("show-pop");
-  resizeCanvasToFullScreen();
-  gameLoop();
 }
 
 function startGame() {
   startScreen.style.display = "none";
-
-  if (canvas.requestFullscreen) {
-    canvas.requestFullscreen().catch(() => {});
-  } else if (canvas.webkitRequestFullscreen) {
-    canvas.webkitRequestFullscreen();
-  }
-
+  canvas.requestFullscreen?.().catch(() => {});
   setTimeout(() => {
-    resizeCanvasToFullScreen();
+    resize();
     canvas.focus();
-    gameLoop();
+    draw();
   }, 300);
+}
+
+function resetGame() {
+  santa.x = 100;
+  gameOver = false;
+  restartBtn.style.display = "none";
+  resize();
+  draw();
 }
 
 startBtn.addEventListener("click", startGame);
 restartBtn.addEventListener("click", resetGame);
-
-setInterval(dropBottle, 1500);
-setInterval(dropBomb, 5000);
-setInterval(() => {
-  difficultyLevel += 0.2;
-  santa.speed += 0.2;
-}, 5000);
