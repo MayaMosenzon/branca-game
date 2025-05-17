@@ -21,7 +21,7 @@ const santa = {
   y: 0, // יקבל גובה בהמשך
   width: 60,
   height: 60,
-  speed: 5
+  speed: 10
 };
 
 let bottles = [];
