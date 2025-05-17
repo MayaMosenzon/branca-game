@@ -18,7 +18,7 @@ backgroundImg.src = "images/background.png";
 
 const santa = {
   x: 180,
-  y: canvas.height - 60 - 10,
+  y: 0, // יקבל גובה בהמשך
   width: 60,
   height: 60,
   speed: 5
@@ -32,17 +32,25 @@ let gameOver = false;
 let touchLeft = false;
 let touchRight = false;
 
-// מקלדת
+// תנועה במקלדת
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") santa.x -= santa.speed;
   if (e.key === "ArrowRight") santa.x += santa.speed;
 });
 
-// מסך מגע
+// תנועה במסך מגע
 document.getElementById("leftTouch").addEventListener("touchstart", () => touchLeft = true);
 document.getElementById("leftTouch").addEventListener("touchend", () => touchLeft = false);
 document.getElementById("rightTouch").addEventListener("touchstart", () => touchRight = true);
 document.getElementById("rightTouch").addEventListener("touchend", () => touchRight = false);
+
+// מתיחת הקנבס לגודל מלא
+function resizeCanvasToFullScreen() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  santa.y = canvas.height - santa.height - 10;
+}
+window.addEventListener("resize", resizeCanvasToFullScreen);
 
 function isColliding(a, b) {
   return (
@@ -131,31 +139,30 @@ function resetGame() {
   score = 0;
   difficultyLevel = 1;
   santa.x = 180;
-  santa.y = canvas.height - santa.height - 10;
   santa.speed = 5;
   gameOver = false;
   restartBtn.style.display = "none";
   restartBtn.classList.remove("show-pop");
+  resizeCanvasToFullScreen();
   gameLoop();
 }
 
 function startGame() {
   startScreen.style.display = "none";
 
-  // כניסה למסך מלא אם אפשר
+  // כניסה למסך מלא
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen().catch(err => console.log("לא נכנס למסך מלא:", err));
-  } else if (canvas.webkitRequestFullscreen) { // Safari
+  } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen();
   }
 
+  resizeCanvasToFullScreen();
   gameLoop();
 }
 
-
 startBtn.addEventListener("click", startGame);
 restartBtn.addEventListener("click", resetGame);
-
 
 setInterval(dropBottle, 1500);
 setInterval(dropBomb, 5000);
